@@ -1,0 +1,38 @@
+__id__ = "punct_fixer"
+__name__ = "Punct Fixer"
+__description__ = "Автокорректор пунктуации при отправке"
+__author__ = "@razer2020nik-ops"
+__version__ = "1.0"
+__icon__ = "msg_edit"
+
+from base_plugin import BasePlugin, HookResult, HookStrategy
+import re
+
+
+class PunctFixer(BasePlugin):
+
+    def on_plugin_load(self):
+        self.add_on_send_message_hook()
+
+    def on_send_message_hook(self, account, params):
+        if not isinstance(params.message, str) or not params.message.strip():
+            return HookResult()
+
+        text = params.message.strip()
+
+        if re.search(r'[а-яёa-z0-9]$', text, re.IGNORECASE):
+            text += '.'
+
+        text = re.sub(r'([.,!?])(?=[^\s.,!?])', r'\1 ', text)
+        text = re.sub(r'\s+([.,!?])', r'\1', text)
+        text = re.sub(r'\s{2,}', ' ', text)
+
+        text = re.sub(r'([.!?]\s+)([а-яёa-z])',
+                      lambda m: m.group(1) + m.group(2).upper(),
+                      text)
+
+        if text:
+            text = text[0].upper() + text[1:]
+
+        params.message = text
+        return HookResult(strategy=HookStrategy.MODIFY, params=params)
